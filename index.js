@@ -1,4 +1,4 @@
-let gun = Gun(['http://nodemixaholic.com:8069/gun', 'https://gun-manhattan.herokuapp.com/gun']);
+let gun = Gun(['http://nodemixaholic.com:8765/gun', 'https://gun-manhattan.herokuapp.com/gun']);
 let usrname;
 
 function showMainPage() {
@@ -20,6 +20,25 @@ function showMainPage() {
     // Use on() to continuously listen for changes
     postsDB.on((data) => {
         addPost(data);
+    });
+}
+
+function validateUsername(username) {
+    if (!username) {
+        // Username is blank, null, or undefined
+        return false;
+    }
+    // Perform additional validation if necessary, such as checking for invalid characters
+
+    // Check if the username exists in the database
+    const coredb = gun.get(`mayaspace`);
+    let userRef = coredb.get('users').get(username);
+    return userRef.once().then(function (userData) {
+        // If userData is null, the username doesn't exist in the database
+        return !!userData;
+    }).catch(function (error) {
+        console.error('Error validating username:', error);
+        return false; // Handle the error appropriately
     });
 }
 
@@ -101,7 +120,9 @@ function post() {
     const coredb = gun.get(`mayaspace`);
     const postsDB = coredb.get('posts');
     if (post.length < 1001) {
-        postsDB.put(postData);
+        if (validateUsername(usrname)) {
+            postsDB.put(postData);
+        }
     } else {
         alert("max post length is 1000 chars!")
     }
